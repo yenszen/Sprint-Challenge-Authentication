@@ -1,42 +1,47 @@
 const request = require("supertest");
 const server = require("./auth-router");
-const db = require("../database/dbConfig");
-const bcrypt = require("bcryptjs");
-const { addUser, findBy } = require("./auth-model");
 
 describe("auth-router.js", () => {
   describe("/register", () => {
-    // it("should add a new user to the database", async () => {
-    //   const credentials = { username: "wigfird", password: "123pop" };
-    //   const hash = bcrypt.hashSync(credentials.password, 10);
-    //   credentials.password = hash;
+    it("should be in the testing environment", async () => {
+      expect(process.env.DB_ENV).toBe("testing");
+    });
 
-    //   await addUser(credentials);
-
-    //   const users = await db("users");
-    //   expect(users).toHaveLength(1);
-    // });
-
-    // it("should contain hashed password in database", async () => {
-    //   const credentials = { username: "wigfird", password: "123pop" };
-    //   const hash = bcrypt.hashSync(credentials.password, 10);
-    //   credentials.password = hash;
-
-    //   await addUser(credentials);
-
-    //   const users = await db("users");
-    //   expect(users[0].password).toBe(credentials.password);
-    // });
-
-    it("should return 200 OK status code", async () => {
+    it("should return 201 OK status code", async () => {
       const res = await request(server)
         .post("/register")
         .send({ username: "jack", password: "123pop" });
+
       expect(res.status).toBe(201);
     });
 
-    beforeEach(async () => {
-      return db("users").truncate();
+    it("should return error message if register credentials are invalid", async () => {
+      const res = await request(server)
+        .post("/register")
+        .send({ username: "wilson" });
+
+      expect(res.body).toEqual({
+        message:
+          "Please provide username and password, with password being alphanumeric"
+      });
+    });
+  });
+
+  describe("/login", () => {
+    it("should return a 200 OK status code", async () => {
+      const res = await request(server)
+        .post("/login")
+        .send({ username: "jack", password: "123pop" });
+
+      expect(res.status).toBe(200);
+    });
+
+    it("should return a JSON object", async () => {
+      const res = await request(server)
+        .post("/login")
+        .send({ username: "jack", password: "123pop" });
+
+      expect(res.type).toBe("application/json");
     });
   });
 });
